@@ -1,0 +1,36 @@
+/* An annotated header (assets/hero/<pid>/header.html): one screenshot on the page's white with red leader notes, drawn
+   as text and CSS instead of a picture, so it stays sharp at any size and weighs only its screenshot.
+   Everything is in units of the screenshot's own pixels (--u: one of them), and the art is the stage's 4:3, as tall as
+   the window allows and centred, so at the stage's size the page matches the still heroes.py makes from it (heroes.mjs).
+   A note is a bar along the part of the screen it names (--y0 to --y1, screenshot px), a tick off its middle, and the
+   label past the tick; .left notes hang off the screenshot's left edge, the rest off its right. Labels never go below
+   9 px: on a phone they wrap into the room beside the screenshot instead of shrinking with it (Hans: readable there). */
+html, body { margin: 0; height: 100%; overflow: hidden; background: #fff; }
+body { display: grid; place-items: center; }
+.art { --sw: 830; --sh: 1624; --ink: #d15045; position: relative; container-type: size;
+  height: min(86vh, 64vw); aspect-ratio: 4 / 3; }   /* the picture sits in the window with room above and below (a full-bleed band) */
+.art > * { --u: calc(100cqh / var(--sh)); }
+.shot { position: absolute; top: 0; left: 50%; height: 100%; width: calc(var(--sw) * var(--u)); translate: -50% 0;
+  border-radius: calc(32 * var(--u)); display: block; }
+.note { position: absolute; margin: 0; top: calc(var(--y0) * var(--u)); height: calc((var(--y1) - var(--y0)) * var(--u));
+  --line: max(1.5px, calc(4 * var(--u))); --off: calc((var(--sw) / 2 + 24) * var(--u));
+  --tick: calc(64 * var(--u)); --gap: calc(16 * var(--u));
+  --room: calc(50cqw - var(--off) - var(--tick) - var(--gap) - 4px);   /* from the label's edge to the art's */
+  left: calc(50% + var(--off)); border-left: var(--line) solid var(--ink); }
+.note.left { left: auto; right: calc(50% + var(--off)); border-left: 0; border-right: var(--line) solid var(--ink); }
+.note::before { content: ''; position: absolute; top: calc(50% - var(--line) / 2); left: 0; width: var(--tick);
+  height: var(--line); background: var(--ink); }
+.note.left::before { left: auto; right: 0; }
+.note figcaption { position: absolute; top: 50%; left: calc(var(--tick) + var(--gap)); translate: 0 -50%;
+  width: max-content; max-width: var(--room); text-wrap: balance; color: var(--ink);
+  font: 500 max(9px, calc(30 * var(--u))) / 1.4 ui-monospace, 'SF Mono', SFMono-Regular, Menlo, Consolas, monospace;
+  letter-spacing: -.01em; -webkit-font-smoothing: antialiased; }
+.note.left figcaption { left: auto; right: calc(var(--tick) + var(--gap)); text-align: right; }
+/* a note at the very top hangs its label from the tick, so a wrapped label grows down, not off the top */
+.note.top figcaption { top: calc(50% - .7em); translate: none; }
+/* on a dark background (header.html?dark): the page takes the phone's own dark, and the notes a lighter red that reads on it */
+html.dark, html.dark body { background: #17171a; }
+html.dark .art { --ink: #ff8f80; }
+/* trial (header.html?light): the light app screenshot, 832 x 1628, with the same notes in the same screen px */
+html.light .art { --sw: 832; --sh: 1628; }
+html.light2 .art { --sw: 830; --sh: 1624; }

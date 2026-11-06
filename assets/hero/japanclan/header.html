@@ -1,0 +1,24 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>japanclan header</title>
+<!-- The japanclan header, live: the app's dark-theme phone (phone.webp, 812 x 1210) with its five notes, Hans's iou-full
+     (_src/japanclan/iou-full.png) drawn as text and CSS (../notes.css). Each note's bar spans the part of the screen it
+     names, in the screenshot's px: the ¥ tab, the trip calendar, the region cards, the first row of picks, the friend's
+     avatar. stage.webp is this page's still (heroes.mjs, ?still), so the open's reveal lands on the same picture. -->
+<link rel="stylesheet" href="../notes.css">
+<script>
+  // the default header is the light app screenshot on the dark page (light2.png); ?phone shows the dark phone it replaced
+  const q = location.search;
+  if (!q.includes('phone')) document.documentElement.classList.add('light2', 'dark');
+  addEventListener('DOMContentLoaded', () => { if (!q.includes('phone')) document.querySelector('.shot').src = 'light2.png'; });
+</script>
+<body>
+<div class="art">
+  <img class="shot" src="light2.png" alt="">
+  <figure class="note top" style="--y0: 4; --y1: 92"><figcaption>IOU ledger</figcaption></figure>
+  <figure class="note left" style="--y0: 128; --y1: 308"><figcaption>flights &amp; hotels from emails</figcaption></figure>
+  <figure class="note" style="--y0: 441; --y1: 597"><figcaption>Saved to-dos</figcaption></figure>
+  <figure class="note left" style="--y0: 748; --y1: 870"><figcaption>Generated local suggestions</figcaption></figure>
+  <figure class="note" style="--y0: 950; --y1: 1010"><figcaption>Friend’s saved</figcaption></figure>
+</div>

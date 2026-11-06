@@ -1,0 +1,89 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>peeps band</title>
+<!-- The peeps header band, live: the app's own avatars (css/styles.css in the peeps repo) without their name tags, in
+     three rows of big peeps across the window, only the app's own twelve, none cut by the edge. One
+     avatar size, the oval tombstone mask with hair popping out. They drift together on one slow sine (a couple of
+     percent of a head, its phase rolling across the rows), drawn at fractional positions on one canvas, so the motion
+     glides. Every card is baked once into its own bitmap, and everything is rebuilt when the page is resized, so it is
+     never stretched. Sizes are in units of the page's height, which the site keeps at the band's (an expanded band is
+     shown whole, at the one band height), so the middle 4:3 always matches the still (assets/hero/peeps/stage.webp,
+     captured from this page with ?still by scripts/heroes.mjs). -->
+<style>
+  html, body { margin: 0; height: 100%; overflow: hidden; background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%); }
+  canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+</style>
+<body>
+<canvas></canvas>
+<script>
+// The app's grid (120px avatars, 30px gaps across, 60px down) with its default roster in its order. The first two rows sit
+// where the drawing (G03) has them, eight across then four under them, and a third row follows below. Rows alternate
+// half a seat, as the drawing has them. Colours cycle by card index, as the app does.
+const ROSTER = ['CISO', 'Engineer', 'Hunter', 'Investigator', 'Manager', 'Analyst_Sr', 'Developer', 'Admin', 'Analyst_Jr', 'Architect', 'Forensics', 'IR'];
+const BG = ['#4da667', '#f6cf64', '#a9accd', '#e0e0e0'];
+const still = location.search.includes('still') || matchMedia('(prefers-reduced-motion: reduce)').matches;
+const cv = document.querySelector('canvas'), ctx = cv.getContext('2d'), dpr = Math.min(2, devicePixelRatio || 1);
+let h, w, S, DX, DY, TOP, PAD, IH, cards = [];
+// Three rows of big peeps across the whole window (the middle row half a seat over), only the app's own twelve, and
+// every one whole: a seat the window's edge would cut is left empty (Hans: bigger, expansive, no half peeps). The rows
+// fill the band: each avatar a quarter of its height (90 px in a 360 px band). The layout is exactly 5/3 of the one the
+// drawing was traced on (round 13: S .15, DX .2, DY .19, the middle row on the band's middle), so the drawing lands on
+// it scaled 5/3 about the stage's centre (heroes.py LANDS peeps) and the open's reveal runs.
+function layout() {
+  h = innerHeight; w = innerWidth; S = h * .15 * 5 / 3; DX = h * .2 * 5 / 3; DY = h * .19 * 5 / 3;
+  IH = S * 280 / 264; PAD = Math.ceil(IH - S) + 2;   // the avatar is taller than its square; room above for the hair
+  TOP = h * .5 - DY;
+  cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
+  const reach = Math.ceil(w / 2 / DX) + 1; cards = [];
+  for (let r = 0; r < 3; r++) for (let k = -reach; k < reach; k++) {
+    const x = w / 2 + (k + (r % 2 ? 0 : .5)) * DX, y = TOP + r * DY;
+    if (x - S / 2 < 8 || x + S / 2 > w - 8) continue;   // whole peeps only: none cut by the window's edge
+    // nor under the site's back arrow (its circle plus 8 px, the top-left 68 px): the band starts at the window's top left
+    if (!still && x - S / 2 < 68 && y - S / 2 - PAD < 68) continue;
+    // each seat's person depends on the seat alone, never on the window's width, so the still (captured wide) and the
+    // live page (at the window's width) put the same person in the same seat
+    const n = (((k * 5 + r * 7) % 12) + 12) % 12;   // only the app's own roster, mixed so no two neighbours match
+    cards.push({ x, y, file: ROSTER[n], bg: BG[(k + r * 2 + 400) % 4], ph: k * .55 + r * 1.3 });
+  }
+}
+// one card, as the app draws it: the oval behind, then the avatar at full width, bottom-aligned, shown inside the oval
+// and everything above the oval's equator (so hair pops out of the shape)
+function bake(img, bg) {
+  const c = document.createElement('canvas'); c.width = Math.ceil(S * dpr); c.height = Math.ceil((S + PAD) * dpr);
+  const g = c.getContext('2d'); g.scale(dpr, dpr);
+  const bot = S + PAD, cx = S / 2, rx = S * .45, ry = S * .4, eq = bot - ry;
+  g.fillStyle = bg; g.beginPath(); g.ellipse(cx, eq, rx, ry, 0, 0, Math.PI * 2); g.fill();
+  g.beginPath(); g.rect(0, 0, S, eq); g.ellipse(cx, eq, rx, ry, 0, 0, Math.PI * 2); g.clip('nonzero');
+  g.drawImage(img, 0, bot - IH, S, IH);
+  return c;
+}
+// one slow, shared drift: each head bobs a couple of percent of its size on a long sine, the phase rolling across the
+// rows like a breeze, so the crowd moves together and smoothly instead of each head twitching on its own keyframes
+const drift = (t, ph) => [S * .012 * Math.sin(t * 2 * Math.PI / 7 + ph * .7), S * .022 * Math.sin(t * 2 * Math.PI / 5.5 + ph)];
+let t0 = null;
+function draw(now) {
+  // the drift eases in from rest over its first two seconds, so the first frame is exactly the still the site shows
+  // underneath (assets/hero/peeps/band.webp) and the live page fades in over it without a jump
+  if (t0 == null) t0 = now;
+  const on = Math.min(1, (now - t0) / 2000), amp = on * on * (3 - 2 * on);
+  ctx.clearRect(0, 0, cv.width, cv.height);
+  for (const c of cards) {   // at fractional positions, so the motion glides rather than steps a pixel at a time
+    const [dx, dy] = still ? [0, 0] : drift((now - t0) / 1000, c.ph).map(v => v * amp);
+    ctx.drawImage(c.bit, (c.x - S / 2 + dx) * dpr, (c.y - S / 2 - PAD + dy) * dpr);
+  }
+}
+const imgs = {};
+const load = f => imgs[f] || (imgs[f] = new Promise(ok => { const im = new Image(); im.onload = () => ok(im); im.onerror = () => ok(null); im.src = `av/${f}.svg`; }));
+// built for the page's size, and rebuilt when it changes, so the band is never stretched
+const build = () => { layout(); return Promise.all(cards.map(c => load(c.file).then(im => { c.bit = im ? bake(im, c.bg) : document.createElement('canvas'); }))); };
+let ready = build(), raf = 0;
+addEventListener('resize', () => { ready = build().then(() => still && draw(0)); });
+ready.then(() => {
+  if (still) { draw(0); return; }
+  // only while the header is on screen: a same-origin frame is not throttled when scrolled away (22% CPU off screen)
+  let vis = true;
+  const loop = now => { draw(now); raf = vis ? requestAnimationFrame(loop) : 0; }; raf = requestAnimationFrame(loop);
+  new IntersectionObserver(([e]) => { vis = e.isIntersecting; if (vis && !raf) raf = requestAnimationFrame(loop); }).observe(cv);
+});
+</script>
