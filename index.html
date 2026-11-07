@@ -30,7 +30,7 @@
     window.dataLayer = window.dataLayer || [];
     window.gtag = function () { dataLayer.push(arguments); };
     gtag('js', new Date());
-    gtag('config', 'G-MGSJYZJ5YJ', { page_location: page(), page_referrer: document.referrer.split(/[?#]/)[0] });
+    gtag('config', 'G-MGSJYZJ5YJ', { content_group: 'things', page_location: page(), page_referrer: document.referrer.split(/[?#]/)[0] });
     addEventListener('hashchange', function () {
       if (location.hash.length > 1) setTimeout(function () { gtag('event', 'page_view', { page_location: page(), page_title: document.title }); }, 300);
     });
