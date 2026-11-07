@@ -21,6 +21,26 @@
   <link rel="preconnect" href="https://unpkg.com" crossorigin>
   <link rel="preload" as="image" href="assets/hand/title.svg">
   <script>window.FOLIO_PUBLIC=true</script>
+  <script>(function () {
+    if (location.hostname !== 'haaans.com') return;
+    var page = function () {
+      var id = location.hash.slice(1);
+      return location.origin + location.pathname + (/^[\w-]+$/.test(id) ? id : '');
+    };
+    window.dataLayer = window.dataLayer || [];
+    window.gtag = function () { dataLayer.push(arguments); };
+    gtag('js', new Date());
+    gtag('config', 'G-MGSJYZJ5YJ', { page_location: page(), page_referrer: document.referrer.split(/[?#]/)[0] });
+    addEventListener('hashchange', function () {
+      if (location.hash.length > 1) setTimeout(function () { gtag('event', 'page_view', { page_location: page(), page_title: document.title }); }, 300);
+    });
+    addEventListener('load', function () {
+      var s = document.createElement('script');
+      s.async = true;
+      s.src = 'https://www.googletagmanager.com/gtag/js?id=G-MGSJYZJ5YJ';
+      document.head.appendChild(s);
+    });
+  })();</script>
   <link rel="icon" href="favicon.png?v=blue">
   <link rel="apple-touch-icon" href="apple-touch-icon.png?v=blue">
   <style>body { margin: 0; background: #fff; }</style>
@@ -45,7 +65,7 @@
   <script defer src="assets/hero/heroes.js"></script>
   <script defer src="assets/sketch/lab/reveal-shader.js"></script>
   <script defer src="assets/sketch/lab/_titles/titles.js"></script>
-  <script defer src="app.js?v=1794006281"></script>
+  <script defer src="app.js?v=1794011854"></script>
   <style>
 :root {
 --c-white: #ffffff;
