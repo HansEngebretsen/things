@@ -67,7 +67,7 @@
   <script defer src="assets/hand/signature-pen.js"></script>
   <script defer src="assets/sketch/lab/reveal-shader.js"></script>
   <script defer src="assets/sketch/lab/_titles/titles.js"></script>
-  <script defer src="app.js?v=1794027517"></script>
+  <script defer src="app.js?v=1794030042"></script>
   <style>
 :root {
 --c-white: #ffffff;
@@ -949,6 +949,9 @@ object-fit: cover;
 }
 .detail-hero-image.as-is { object-fit: scale-down; height: auto; aspect-ratio: 4 / 3; }
 .detail-hero-image.demo, .detail-hero-image.demo + .pz-canvas { transform: translateY(var(--crop, 0px)); }
+.detail-main.demo-on { --crop: 0px; }
+.detail-main.hero-full.demo-on, .detail-main.hero-full[data-shape].demo-on { --stage-h: min(calc(100cqw * .75), 72svh); --hero-w: calc(var(--stage-h) * 4 / 3); }
+.detail-main.hero-full[data-shape].demo-on .detail-hero { aspect-ratio: 4 / 3; }
 .detail-hero .hero-page { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; pointer-events: none;
 opacity: 0; transition: opacity .3s ease; }
 .detail-hero .hero-page.in { opacity: 1; }
