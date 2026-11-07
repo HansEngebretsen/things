@@ -53,4 +53,13 @@ A portfolio of things I've made, each one a blue marker drawing that turns into 
 <p>The arrow returns you to the same spot on the page, right where you left off.</p>
 </td>
 </tr>
+<tr valign="top">
+<td width="50%">
+<h3>Hover the signature</h3>
+<p>Point at my name and it signs itself again, stroke by stroke, and starts over if you come back.</p>
+</td>
+<td width="50%">
+<img src="demos/sign.gif" alt="Hover the signature">
+</td>
+</tr>
 </table>
