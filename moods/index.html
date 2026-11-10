@@ -532,13 +532,11 @@ details.fold.closing > summary::after{transform:rotate(-45deg)}
 }
 /* haaans.com/things/moods: the shared footer at the foot of the page, and Hans's back arrow to the Moods page, top left */
 hans-footer{margin-top:auto;width:100%}
-/* Platform: Web or iOS; the iOS layouts as icons (dim while Web is on) */
+/* Platform: Web or iOS; the iOS layouts as icons, shown only while iOS is on */
 .seg.icons button{width:46px;padding:0;display:flex;align-items:center;justify-content:center}
 .seg.icons button svg{display:block}
 .seg.icons button[hidden]{display:none}
-.layrow{transition:opacity .25s}
-.layrow.off{opacity:.35}
-.layrow.off button{pointer-events:none}
+.layrow.off{display:none}
 hans-footer:not(:defined){display:block;min-height:76px}
 .backto{position:fixed;top:calc(env(safe-area-inset-top) + 14px);left:calc(env(safe-area-inset-left) + 16px);z-index:6;width:44px;height:44px;
   display:flex;align-items:center;justify-content:center;border-radius:22px;color:var(--chrome-strong);transition:transform .1s ease-out,color .3s}
