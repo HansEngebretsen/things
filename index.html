@@ -56,18 +56,18 @@
   <script defer src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js" crossorigin></script>
 
   
-  <script defer src="data.js?v=1794302885"></script>
-  <script defer src="readmes.js?v=1794302885"></script>
-  <script defer src="assets/motion.js?v=1794302885"></script>
-  <script defer src="assets/sketch/lab/manifest.js?v=1794302885"></script>
-  <script defer src="assets/sketch/lab/frame.js?v=1794302885"></script>
-  <script defer src="assets/sketch/lab/focus.js?v=1794302885"></script>
-  <script defer src="assets/sketch/lab/collage.js?v=1794302885"></script>
-  <script defer src="assets/hero/heroes.js?v=1794302885"></script>
-  <script defer src="assets/hand/signature-pen.js?v=1794302885"></script>
-  <script defer src="assets/sketch/lab/reveal-shader.js?v=1794302885"></script>
-  <script defer src="assets/sketch/lab/_titles/titles.js?v=1794302885"></script>
-  <script defer src="app.js?v=1794302885"></script>
+  <script defer src="data.js?v=1794303335"></script>
+  <script defer src="readmes.js?v=1794303335"></script>
+  <script defer src="assets/motion.js?v=1794303335"></script>
+  <script defer src="assets/sketch/lab/manifest.js?v=1794303335"></script>
+  <script defer src="assets/sketch/lab/frame.js?v=1794303335"></script>
+  <script defer src="assets/sketch/lab/focus.js?v=1794303335"></script>
+  <script defer src="assets/sketch/lab/collage.js?v=1794303335"></script>
+  <script defer src="assets/hero/heroes.js?v=1794303335"></script>
+  <script defer src="assets/hand/signature-pen.js?v=1794303335"></script>
+  <script defer src="assets/sketch/lab/reveal-shader.js?v=1794303335"></script>
+  <script defer src="assets/sketch/lab/_titles/titles.js?v=1794303335"></script>
+  <script defer src="app.js?v=1794303335"></script>
   <style>
 :root {
 --c-white: #ffffff;
@@ -1179,7 +1179,14 @@ margin-top: 0.5rem;
 font-size: 13px;
 color: var(--c-gray-500);
 }
-.wall { will-change: transform; }
+@keyframes wall-depth {
+from { transform: translate(calc(var(--x) * var(--j)), calc(var(--y) * var(--j) + var(--dp) * var(--depth))) rotate(var(--r)) scale(var(--s, 1)); }
+to   { transform: translate(calc(var(--x) * var(--j)), calc(var(--y) * var(--j) - var(--dp) * var(--depth))) rotate(var(--r)) scale(var(--s, 1)); }
+}
+.wall { --depth: 44px; }
+@supports (animation-timeline: view()) {
+@media (prefers-reduced-motion: no-preference) { .wall-tile { animation: wall-depth linear both; animation-timeline: view(); } }
+}
 .wall { width: 100vw; margin-left: calc(50% - 50vw); display: flex; flex-direction: column; align-items: center; padding: 0 16px; box-sizing: border-box; }
 .wall-section { width: min(100%, var(--wall-w, 100%)); }
 .wall-tiles { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 10px 4px; padding: 12px 20px; }
@@ -1197,7 +1204,7 @@ transform: translateY(var(--qy, 0px)) rotate(var(--r, 0deg)); transition: opacit
 .wall-section:not(.in) .wall-tile { opacity: 0; translate: 0 -24px; }
 .wall-section.in .wall-tile { transition-delay: var(--d, 0ms); }
 @media (prefers-reduced-motion: reduce) { .wall-tile, .wall-q { transition: none; } .wall-section:not(.in) .wall-tile { opacity: 1; translate: none; } .wall-section:not(.in) .wall-q { opacity: 1; } }
-@media (max-width: 767px) { .wall { padding: 0 8px; } .wall-tiles { gap: 8px 4px; padding: 8px 4px; } .wall-tile { width: calc((100vw - 48px) / 3.15); } .wall-tile { --j: .35; } .wall-q { margin: 14px 16px; } .wall-q img { zoom: .72; } }
+@media (max-width: 767px) { .wall { padding: 0 8px; } .wall-tiles { gap: 8px 4px; padding: 8px 4px; } .wall-tile { width: calc((100vw - 48px) / 3.15); } .wall-tile { --j: .35; } .wall { --depth: 20px; } .wall-q { margin: 14px 16px; } .wall-q img { zoom: .72; } }
 .chapter-media figure.wide { width: 100vw; max-width: none; margin-left: calc(50% - 50vw); align-self: flex-start; }
 .chapter-media figure.wide .media-frame { border-radius: 0; }
 .chapter-media figure.wide .media-caption { max-width: 800px; margin: 0.75rem auto 0; padding: 0 1rem; }
