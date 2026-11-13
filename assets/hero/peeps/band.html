@@ -2,14 +2,16 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>peeps band</title>
-<!-- The peeps header band, live: the app's own avatars (css/styles.css in the peeps repo) without their name tags, in
-     three rows of big peeps across the window, only the app's own twelve, none cut by the edge. One
-     avatar size, the oval tombstone mask with hair popping out. They drift together on one slow sine (a couple of
-     percent of a head, its phase rolling across the rows), drawn at fractional positions on one canvas, so the motion
-     glides. Every card is baked once into its own bitmap, and everything is rebuilt when the page is resized, so it is
-     never stretched. Sizes are in units of the page's height, which the site keeps at the band's (an expanded band is
-     shown whole, at the one band height), so the middle 4:3 always matches the still (assets/hero/peeps/stage.webp,
-     captured from this page with ?still by scripts/heroes.mjs). -->
+<!-- The peeps header band, live: the app's own people in three rows across the window, none cut by the edge, and no two
+     the same (Hans, 13 Nov: they were twelve faces repeated). Every other seat is one of the app's modern avatars
+     (css/styles.css in the peeps repo, without its name tag: the oval tombstone mask with hair popping out; av/), the
+     seats between them its standing pixel people (js/pixel-art.js, whole, with their ground shadow; px/). The app's own
+     twelve sit nearest the middle and its other business faces fill outward. They drift together on one slow sine (a
+     couple of percent of a head, its phase rolling across the rows), drawn at fractional positions on one canvas, so
+     the motion glides. Every card is baked once into its own bitmap, and everything is rebuilt when the page is resized,
+     so it is never stretched. Sizes are in units of the page's height, which the site keeps at the band's (an expanded
+     band is shown whole, at the one band height), so the middle 4:3 always matches the still
+     (assets/hero/peeps/stage.webp, captured from this page with ?still by scripts/heroes.mjs). -->
 <style>
   html, body { margin: 0; height: 100%; overflow: hidden; background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%); }
   canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
@@ -17,42 +19,52 @@
 <body>
 <canvas></canvas>
 <script>
-// The app's grid (120px avatars, 30px gaps across, 60px down) with its default roster in its order. The first two rows sit
-// where the drawing (G03) has them, eight across then four under them, and a third row follows below. Rows alternate
-// half a seat, as the drawing has them. Colours cycle by card index, as the app does.
+// The app's grid (120px avatars, 30px gaps across, 60px down). Rows alternate half a seat, as the drawing has them.
+// Colours cycle by card index, as the app does. POOL: the app's default roster, then its other business faces (less the
+// yellow-skinned, green-tongued and skull-shirted ones); PX: eighty standing pixel people, each from its own seed.
 const ROSTER = ['CISO', 'Engineer', 'Hunter', 'Investigator', 'Manager', 'Analyst_Sr', 'Developer', 'Admin', 'Analyst_Jr', 'Architect', 'Forensics', 'IR'];
+const POOL = [...ROSTER, ...['b0', 'a0', 'b1', 'a1', 'b2', 'a2', 'b3', 'a4', 'b4', 'a5', 'b5', 'a6', 'b7', 'a8', 'b9', 'a10', 'b12', 'a12', 'b13', 'a14', 'b15', 'a15', 'b16', 'a19', 'b17', 'a20', 'b18', 'a21', 'b19', 'a22', 'b20', 'a26', 'b21', 'a27', 'b22', 'a28', 'b23', 'a29', 'b24', 'a30', 'b25', 'a31', 'b26', 'a32', 'b28', 'a34', 'b29', 'a35', 'b30', 'a36', 'b31', 'a40', 'b33', 'a42', 'b34', 'a43', 'b35', 'a44', 'b36', 'a45', 'b37', 'a46', 'b39', 'a47', 'b41', 'a48', 'b42', 'a50', 'b43', 'a51', 'b44', 'a52', 'b45', 'a55', 'b46', 'a56', 'b47', 'a59', 'b48', 'b51', 'b52', 'b53', 'b54', 'b55', 'b56', 'b57', 'b58', 'b59']];
+const PX = Array.from({ length: 80 }, (_, i) => 'p' + i);
 const BG = ['#4da667', '#f6cf64', '#a9accd', '#e0e0e0'];
-const still = location.search.includes('still') || matchMedia('(prefers-reduced-motion: reduce)').matches;
+// ?card: the picture the drawing is traced on (a 1200 x 900 window): the same seats and people at 3/5 the size, the layout
+// the drawing was first traced on, which lands on the header scaled 5/3 about the stage's centre; the edges cut whoever they cut
+const card = location.search.includes('card');
+const still = card || location.search.includes('still') || matchMedia('(prefers-reduced-motion: reduce)').matches;
 const cv = document.querySelector('canvas'), ctx = cv.getContext('2d'), dpr = Math.min(2, devicePixelRatio || 1);
 let h, w, S, DX, DY, TOP, PAD, IH, cards = [];
-// Three rows of big peeps across the whole window (the middle row half a seat over), only the app's own twelve, and
+// Three rows of big peeps across the whole window (the middle row half a seat over), and
 // every one whole: a seat the window's edge would cut is left empty (Hans: bigger, expansive, no half peeps). The rows
 // fill the band: each avatar a quarter of its height (90 px in a 360 px band). The layout is exactly 5/3 of the one the
 // drawing was traced on (round 13: S .15, DX .2, DY .19, the middle row on the band's middle), so the drawing lands on
 // it scaled 5/3 about the stage's centre (heroes.py LANDS peeps) and the open's reveal runs.
 function layout() {
-  h = innerHeight; w = innerWidth; S = h * .15 * 5 / 3; DX = h * .2 * 5 / 3; DY = h * .19 * 5 / 3;
+  h = innerHeight; w = innerWidth; const Z = card ? 1 : 5 / 3; S = h * .15 * Z; DX = h * .2 * Z; DY = h * .19 * Z;
   IH = S * 280 / 264; PAD = Math.ceil(IH - S) + 2;   // the avatar is taller than its square; room above for the hair
   TOP = h * .5 - DY;
   cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
   const reach = Math.ceil(w / 2 / DX) + 1; cards = [];
   for (let r = 0; r < 3; r++) for (let k = -reach; k < reach; k++) {
     const x = w / 2 + (k + (r % 2 ? 0 : .5)) * DX, y = TOP + r * DY;
-    if (x - S / 2 < 8 || x + S / 2 > w - 8) continue;   // whole peeps only: none cut by the window's edge
+    if (!card && (x - S / 2 < 8 || x + S / 2 > w - 8)) continue;   // whole peeps only: none cut by the window's edge
     // nor under the site's back arrow (its circle plus 8 px, the top-left 68 px): the band starts at the window's top left
     if (!still && x - S / 2 < 68 && y - S / 2 - PAD < 68) continue;
     // each seat's person depends on the seat alone, never on the window's width, so the still (captured wide) and the
     // live page (at the window's width) put the same person in the same seat
-    const n = (((k * 5 + r * 7) % 12) + 12) % 12;   // only the app's own roster, mixed so no two neighbours match
-    cards.push({ x, y, file: ROSTER[n], bg: BG[(k + r * 2 + 400) % 4], ph: k * .55 + r * 1.3 });
+    // every seat its own person: seats are numbered outward from the middle, so the app's own twelve sit in the middle
+    const j = k >= 0 ? 2 * k : -2 * k - 1, id = j * 3 + r;
+    const px = (k + r + 400) % 2 === 0;   // every other seat is one of the app's standing pixel people (Hans, 13 Nov)
+    cards.push(px ? { x, y, px: true, file: 'px/' + PX[id % PX.length], bg: BG[(k + r * 2 + 400) % 4], ph: k * .55 + r * 1.3 }
+                  : { x, y, file: 'av/' + POOL[id % POOL.length], bg: BG[(k + r * 2 + 400) % 4], ph: k * .55 + r * 1.3 });
   }
 }
 // one card, as the app draws it: the oval behind, then the avatar at full width, bottom-aligned, shown inside the oval
 // and everything above the oval's equator (so hair pops out of the shape)
-function bake(img, bg) {
+function bake(img, bg, px) {
   const c = document.createElement('canvas'); c.width = Math.ceil(S * dpr); c.height = Math.ceil((S + PAD) * dpr);
   const g = c.getContext('2d'); g.scale(dpr, dpr);
   const bot = S + PAD, cx = S / 2, rx = S * .45, ry = S * .4, eq = bot - ry;
+  if (px) {   // a standing pixel person, as the app's pixel style shows them whole: no tile, feet where the oval's foot is, whole device pixels per sprite pixel
+    const u = Math.max(1, Math.round(S * 1.2 * dpr / 48)), pw = 32 * u, ph = 48 * u; c.width = pw; c.height = ph; const g2 = c.getContext('2d'); g2.imageSmoothingEnabled = false; g2.drawImage(img, 0, 0, pw, ph); c.px = [pw / dpr, ph / dpr, 4 * u / dpr]; return c; }
   g.fillStyle = bg; g.beginPath(); g.ellipse(cx, eq, rx, ry, 0, 0, Math.PI * 2); g.fill();
   g.beginPath(); g.rect(0, 0, S, eq); g.ellipse(cx, eq, rx, ry, 0, 0, Math.PI * 2); g.clip('nonzero');
   g.drawImage(img, 0, bot - IH, S, IH);
@@ -70,13 +82,14 @@ function draw(now) {
   ctx.clearRect(0, 0, cv.width, cv.height);
   for (const c of cards) {   // at fractional positions, so the motion glides rather than steps a pixel at a time
     const [dx, dy] = still ? [0, 0] : drift((now - t0) / 1000, c.ph).map(v => v * amp);
+    if (c.bit.px) { const [pw, ph, foot] = c.bit.px; ctx.drawImage(c.bit, Math.round((c.x - pw / 2 + dx) * dpr), Math.round((c.y + S / 2 - ph + foot + dy) * dpr)); continue; }   // its feet (4 sprite pixels above the box's foot) on the seat's floor
     ctx.drawImage(c.bit, (c.x - S / 2 + dx) * dpr, (c.y - S / 2 - PAD + dy) * dpr);
   }
 }
 const imgs = {};
-const load = f => imgs[f] || (imgs[f] = new Promise(ok => { const im = new Image(); im.onload = () => ok(im); im.onerror = () => ok(null); im.src = `av/${f}.svg`; }));
+const load = f => imgs[f] || (imgs[f] = new Promise(ok => { const im = new Image(); im.onload = () => ok(im); im.onerror = () => ok(null); im.src = `${f}.svg`; }));
 // built for the page's size, and rebuilt when it changes, so the band is never stretched
-const build = () => { layout(); return Promise.all(cards.map(c => load(c.file).then(im => { c.bit = im ? bake(im, c.bg) : document.createElement('canvas'); }))); };
+const build = () => { layout(); return Promise.all(cards.map(c => load(c.file).then(im => { c.bit = im ? bake(im, c.bg, c.px) : document.createElement('canvas'); }))); };
 let ready = build(), raf = 0;
 addEventListener('resize', () => { ready = build().then(() => still && draw(0)); });
 ready.then(() => {
