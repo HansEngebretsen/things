@@ -13,7 +13,9 @@
      band is shown whole, at the one band height), so the middle 4:3 always matches the still
      (assets/hero/peeps/stage.webp, captured from this page with ?still by scripts/heroes.mjs). -->
 <style>
-  html, body { margin: 0; height: 100%; overflow: hidden; background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%); }
+  /* the app's background, laid out as the still has it (a picture 4.8 band heights wide, centred), so the page fades in over
+     the still without the background shifting */
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #f4f4f5 linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%) center / 480vh 100vh no-repeat; }
   canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
 </style>
 <body>
@@ -47,7 +49,8 @@ function layout() {
     const x = w / 2 + (k + (r % 2 ? 0 : .5)) * DX, y = TOP + r * DY;
     if (!card && (x - S / 2 < 8 || x + S / 2 > w - 8)) continue;   // whole peeps only: none cut by the window's edge
     // nor under the site's back arrow (its circle plus 8 px, the top-left 68 px): the band starts at the window's top left
-    if (!still && x - S / 2 < 68 && y - S / 2 - PAD < 68) continue;
+    // (seats.json carries these rules to the site, which paints the same seats out of the still it shows first)
+    if (!still && x - S / 2 < 68 && y - S * .57 < 68) continue;
     // each seat's person depends on the seat alone, never on the window's width, so the still (captured wide) and the
     // live page (at the window's width) put the same person in the same seat
     // every seat its own person: seats are numbered outward from the middle, so the app's own twelve sit in the middle
@@ -64,7 +67,11 @@ function bake(img, bg, px) {
   const g = c.getContext('2d'); g.scale(dpr, dpr);
   const bot = S + PAD, cx = S / 2, rx = S * .45, ry = S * .4, eq = bot - ry;
   if (px) {   // a standing pixel person, as the app's pixel style shows them whole: no tile, feet where the oval's foot is, whole device pixels per sprite pixel
-    const u = Math.max(1, Math.round(S * 1.2 * dpr / 48)), pw = 32 * u, ph = 48 * u; c.width = pw; c.height = ph; const g2 = c.getContext('2d'); g2.imageSmoothingEnabled = false; g2.drawImage(img, 0, 0, pw, ph); c.px = [pw / dpr, ph / dpr, 4 * u / dpr]; return c; }
+    // Always the same share of a seat (112/135 of its width, the size the drawing was traced at), whatever the window:
+    // rounded to whole device pixels it was 4% bigger live than in the still at a 360 px band, so every pixel person
+    // hopped as the page took over (Hans, 13 Nov). Blown up by a whole number first, so the sprite's pixels stay square
+    // and hard, then drawn at the exact size.
+    const pw = S * 112 / 135, u = Math.max(1, Math.ceil(pw * dpr / 32)); c.width = 32 * u; c.height = 48 * u; const g2 = c.getContext('2d'); g2.imageSmoothingEnabled = false; g2.drawImage(img, 0, 0, c.width, c.height); c.px = [pw, pw * 1.5, pw / 8]; return c; }
   g.fillStyle = bg; g.beginPath(); g.ellipse(cx, eq, rx, ry, 0, 0, Math.PI * 2); g.fill();
   g.beginPath(); g.rect(0, 0, S, eq); g.ellipse(cx, eq, rx, ry, 0, 0, Math.PI * 2); g.clip('nonzero');
   g.drawImage(img, 0, bot - IH, S, IH);
@@ -82,7 +89,8 @@ function draw(now) {
   ctx.clearRect(0, 0, cv.width, cv.height);
   for (const c of cards) {   // at fractional positions, so the motion glides rather than steps a pixel at a time
     const [dx, dy] = still ? [0, 0] : drift((now - t0) / 1000, c.ph).map(v => v * amp);
-    if (c.bit.px) { const [pw, ph, foot] = c.bit.px; ctx.drawImage(c.bit, Math.round((c.x - pw / 2 + dx) * dpr), Math.round((c.y + S / 2 - ph + foot + dy) * dpr)); continue; }   // its feet (4 sprite pixels above the box's foot) on the seat's floor
+    // its feet (4 sprite pixels above the box's foot) on the seat's floor; it glides with the faces, not a device pixel at a time
+    if (c.bit.px) { const [pw, ph, foot] = c.bit.px; ctx.drawImage(c.bit, (c.x - pw / 2 + dx) * dpr, (c.y + S / 2 - ph + foot + dy) * dpr, pw * dpr, ph * dpr); continue; }
     ctx.drawImage(c.bit, (c.x - S / 2 + dx) * dpr, (c.y - S / 2 - PAD + dy) * dpr);
   }
 }
