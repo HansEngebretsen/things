@@ -56,18 +56,18 @@
   <script defer src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js" crossorigin></script>
 
   
-  <script defer src="data.js?v=1794686334"></script>
-  <script defer src="readmes.js?v=1794686334"></script>
-  <script defer src="assets/motion.js?v=1794686334"></script>
-  <script defer src="assets/sketch/lab/manifest.js?v=1794686334"></script>
-  <script defer src="assets/sketch/lab/frame.js?v=1794686334"></script>
-  <script defer src="assets/sketch/lab/focus.js?v=1794686334"></script>
-  <script defer src="assets/sketch/lab/collage.js?v=1794686334"></script>
-  <script defer src="assets/hero/heroes.js?v=1794686334"></script>
-  <script defer src="assets/hand/signature-pen.js?v=1794686334"></script>
-  <script defer src="assets/sketch/lab/reveal-shader.js?v=1794686334"></script>
-  <script defer src="assets/sketch/lab/_titles/titles.js?v=1794686334"></script>
-  <script defer src="app.js?v=1794686334"></script>
+  <script defer src="data.js?v=1794686643"></script>
+  <script defer src="readmes.js?v=1794686643"></script>
+  <script defer src="assets/motion.js?v=1794686643"></script>
+  <script defer src="assets/sketch/lab/manifest.js?v=1794686643"></script>
+  <script defer src="assets/sketch/lab/frame.js?v=1794686643"></script>
+  <script defer src="assets/sketch/lab/focus.js?v=1794686643"></script>
+  <script defer src="assets/sketch/lab/collage.js?v=1794686643"></script>
+  <script defer src="assets/hero/heroes.js?v=1794686643"></script>
+  <script defer src="assets/hand/signature-pen.js?v=1794686643"></script>
+  <script defer src="assets/sketch/lab/reveal-shader.js?v=1794686643"></script>
+  <script defer src="assets/sketch/lab/_titles/titles.js?v=1794686643"></script>
+  <script defer src="app.js?v=1794686643"></script>
   <style>
 :root {
 --c-white: #ffffff;
@@ -898,6 +898,10 @@ display: grid;
 .detail-main.hero-full.hero-phone:not(.demo-on) { --stage-h: calc(100vw / (var(--aspect))); --hero-w: 100vw; --band-h: var(--stage-h); }
 .app-wrapper .detail-main.hero-full.hero-phone:not(.demo-on) .detail-hero { width: 100vw; max-width: none; margin-left: calc(50% - 50vw); margin-right: 0; border-radius: 0; }
 .app-wrapper .detail-main.hero-phone .detail-hero::after { display: none; }
+.app-wrapper .detail-container .detail-main.hero-phone:not(.demo-on) .detail-hero { clip-path: none; }
+.app-wrapper .detail-main.hero-phone .detail-hero, .app-wrapper .detail-main.hero-phone .detail-hero-image { border-radius: 0; -webkit-mask-image: none; mask-image: none; }
+.app-wrapper .detail-main.hero-phone-fill:not(.demo-on) .detail-hero { box-shadow: 0 -72px 0 0 var(--phone-edge, #fff); overflow: visible; }
+.app-wrapper .detail-main.hero-phone-fill:not(.demo-on) .detail-hero > :is(video, img) { border-radius: 0; }
 }
 @media (max-width: 767px) { .detail-main:not(.hero-full):not(.hero-big):not(.hero-wide) { --stage-h: calc(100cqw * .75); --band-h: var(--stage-h); } }
 @media (max-width: 767px) { .detail-container.contained .detail-main.hero-wide { --stage-h: calc(100cqw * .75); --band-h: var(--stage-h); } }
@@ -1330,6 +1334,7 @@ animation-timing-function: var(--ease-out);
 .filter-bar { display: none; }
 .filter-dropdown { display: block; }
 }
+@media (max-width: 767px) { .app-wrapper .detail-container .close-btn, .app-wrapper .detail-container .close-btn:hover { top: .375rem; left: .25rem; } }   
 @media (min-width: 768px) {
 .app-wrapper { padding: 6rem 0; }
 .container, .detail-container { padding: 0 2rem; }
