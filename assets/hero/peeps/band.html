@@ -80,18 +80,39 @@ function bake(img, bg, px) {
 // one slow, shared drift: each head bobs a couple of percent of its size on a long sine, the phase rolling across the
 // rows like a breeze, so the crowd moves together and smoothly instead of each head twitching on its own keyframes
 const drift = (t, ph) => [S * .012 * Math.sin(t * 2 * Math.PI / 7 + ph * .7), S * .022 * Math.sin(t * 2 * Math.PI / 5.5 + ph)];
+// the pointer (Hans, 20 Nov: hover the peeps and they move a little, ping around; desktop only): the site passes it in
+// (window.peepsPoint, page px in this frame, or null when it leaves), since the band itself takes no pointer. Peeps near
+// it lean away on a spring; one it passes over hops and swells a little, then everyone settles back.
+let ptr = null, lastT = 0;
+window.peepsPoint = (x, y) => { ptr = x == null ? null : [x, y]; };
+function physics(dt) {
+  const R = S * 1.35;
+  for (const c of cards) {
+    c.ox ??= 0; c.oy ??= 0; c.vx ??= 0; c.vy ??= 0; c.sc ??= 1; c.vs ??= 0;
+    let fx = -c.ox * 90, fy = -c.oy * 90;                                  // spring home
+    if (ptr) { const dx = c.x - ptr[0], dy = c.y - ptr[1], d = Math.hypot(dx, dy) || 1;
+      if (d < R) { const k = (1 - d / R) ** 2 * S * 26; fx += dx / d * k; fy += dy / d * k; }
+      const over = d < S * .5; if (over && !c.over) { c.vy -= S * 3.2; c.vs += 2.2; } c.over = over; } else c.over = false;
+    c.vx += (fx - c.vx * 11) * dt; c.vy += (fy - c.vy * 11) * dt; c.ox += c.vx * dt; c.oy += c.vy * dt;
+    c.vs += (-(c.sc - 1) * 160 - c.vs * 12) * dt; c.sc += c.vs * dt;
+  }
+}
 let t0 = null;
 function draw(now) {
+  const dt = Math.min(.05, lastT ? (now - lastT) / 1000 : 0); lastT = now; if (!still) physics(dt);
   // the drift eases in from rest over its first two seconds, so the first frame is exactly the still the site shows
   // underneath (assets/hero/peeps/band.webp) and the live page fades in over it without a jump
   if (t0 == null) t0 = now;
   const on = Math.min(1, (now - t0) / 2000), amp = on * on * (3 - 2 * on);
   ctx.clearRect(0, 0, cv.width, cv.height);
   for (const c of cards) {   // at fractional positions, so the motion glides rather than steps a pixel at a time
-    const [dx, dy] = still ? [0, 0] : drift((now - t0) / 1000, c.ph).map(v => v * amp);
+    let [dx, dy] = still ? [0, 0] : drift((now - t0) / 1000, c.ph).map(v => v * amp);
+    dx += c.ox || 0; dy += c.oy || 0; const sc = c.sc || 1;
+    if (sc !== 1) { const ax = c.x + dx, ay = c.y + S / 2 + dy; ctx.save(); ctx.translate(ax * dpr, ay * dpr); ctx.scale(sc, sc); ctx.translate(-ax * dpr, -ay * dpr); }
     // its feet (4 sprite pixels above the box's foot) on the seat's floor; it glides with the faces, not a device pixel at a time
-    if (c.bit.px) { const [pw, ph, foot] = c.bit.px; ctx.drawImage(c.bit, (c.x - pw / 2 + dx) * dpr, (c.y + S / 2 - ph + foot + dy) * dpr, pw * dpr, ph * dpr); continue; }
-    ctx.drawImage(c.bit, (c.x - S / 2 + dx) * dpr, (c.y - S / 2 - PAD + dy) * dpr);
+    if (c.bit.px) { const [pw, ph, foot] = c.bit.px; ctx.drawImage(c.bit, (c.x - pw / 2 + dx) * dpr, (c.y + S / 2 - ph + foot + dy) * dpr, pw * dpr, ph * dpr); }
+    else ctx.drawImage(c.bit, (c.x - S / 2 + dx) * dpr, (c.y - S / 2 - PAD + dy) * dpr);
+    if (sc !== 1) ctx.restore();
   }
 }
 const imgs = {};
