@@ -56,18 +56,18 @@
   <script defer src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js" crossorigin></script>
 
   
-  <script defer src="data.js?v=1795224248"></script>
-  <script defer src="readmes.js?v=1795224248"></script>
-  <script defer src="assets/motion.js?v=1795224248"></script>
-  <script defer src="assets/sketch/lab/manifest.js?v=1795224248"></script>
-  <script defer src="assets/sketch/lab/frame.js?v=1795224248"></script>
-  <script defer src="assets/sketch/lab/focus.js?v=1795224248"></script>
-  <script defer src="assets/sketch/lab/collage.js?v=1795224248"></script>
-  <script defer src="assets/hero/heroes.js?v=1795224248"></script>
-  <script defer src="assets/hand/signature-pen.js?v=1795224248"></script>
-  <script defer src="assets/sketch/lab/reveal-shader.js?v=1795224248"></script>
-  <script defer src="assets/sketch/lab/_titles/titles.js?v=1795224248"></script>
-  <script defer src="app.js?v=1795224248"></script>
+  <script defer src="data.js?v=1795224762"></script>
+  <script defer src="readmes.js?v=1795224762"></script>
+  <script defer src="assets/motion.js?v=1795224762"></script>
+  <script defer src="assets/sketch/lab/manifest.js?v=1795224762"></script>
+  <script defer src="assets/sketch/lab/frame.js?v=1795224762"></script>
+  <script defer src="assets/sketch/lab/focus.js?v=1795224762"></script>
+  <script defer src="assets/sketch/lab/collage.js?v=1795224762"></script>
+  <script defer src="assets/hero/heroes.js?v=1795224762"></script>
+  <script defer src="assets/hand/signature-pen.js?v=1795224762"></script>
+  <script defer src="assets/sketch/lab/reveal-shader.js?v=1795224762"></script>
+  <script defer src="assets/sketch/lab/_titles/titles.js?v=1795224762"></script>
+  <script defer src="app.js?v=1795224762"></script>
   <style>
 :root {
 --c-white: #ffffff;
@@ -969,8 +969,11 @@ margin-top: calc(-1 * var(--crop)); margin-bottom: calc(1.5rem - var(--crop)); c
 clip-path: inset(var(--crop) 0 round 0px); }
 .detail-container.banded .detail-main.hero-grid .detail-hero.expanded { translate: var(--shift) 0; }
 .app-wrapper .detail-container .close-btn, .app-wrapper .detail-container .close-btn:hover { position: absolute; top: 1rem; left: calc(1rem - max(0px, (100vw - 1024px) / 2));    z-index: 60; width: 2.75rem; height: 2.75rem; padding: 0;
-background: none; border: 0; box-shadow: none; mix-blend-mode: difference; }
-.app-wrapper .detail-container .hand-back { background: #fff; }
+border: 0; border-radius: 50%; display: grid; place-items: center;
+background: rgba(255, 255, 255, .9); -webkit-backdrop-filter: blur(10px) saturate(1.4); backdrop-filter: blur(10px) saturate(1.4);
+box-shadow: 0 1px 2px rgba(0, 0, 0, .08), 0 2px 10px rgba(0, 0, 0, .08); mix-blend-mode: normal; }
+.app-wrapper .detail-container .close-btn:hover { background: rgba(255, 255, 255, .95); opacity: 1; }
+.app-wrapper .detail-container .hand-back { background: #121210; width: 24px; height: 24px; }
 .app-wrapper .detail-container.banded.contained .detail-main.hero-big .detail-hero { width: var(--hero-w); margin-left: calc(50% - var(--hero-w) / 2);
 clip-path: none; }
 .detail-container.banded.contained .detail-main.hero-big .detail-hero::after { display: none; }
@@ -1456,7 +1459,7 @@ gap: 2rem;
 .detail-title { font-size: 36px; }
 }
 </style>
-  <script>if(/^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname))document.head.appendChild(Object.assign(document.createElement('script'),{src:'assets/editor.js?v=1795224248'}))</script>
+  <script>if(/^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname))document.head.appendChild(Object.assign(document.createElement('script'),{src:'assets/editor.js?v=1795224762'}))</script>
 </head>
 <body>
 <div id="root"><div class="app-wrapper inked "><div class="container"><div><header class="header-section"><h1 class="site-title"><span class="sr-only">Some things I've made, by Hans Engebretsen</span><img src="assets/hand/title.svg" alt="" aria-hidden="true" width="560" height="83"></h1><p class="bio-text" data-edit="intro, paragraph 1">I make things that help people spend more time on what matters. I've loved getting to do that in different ways the last 20 years as a designer, developer, UXer, artist, art director, newspaper boy, and press operator.</p><p class="bio-text" data-edit="intro, paragraph 2">At the moment, I lead design for agentic platforms on security products at Google. In the past, I've worked on developer tools, Auth, consumer electronics, and government/philanthropy. I've helped build and launch 20+ products - some flopped, but some grew to hundreds of millions in revenue &amp; have reached billions of people. There's just-for-fun work below, <a href="mailto:engebretsenh@gmail.com">reach out</a> for the business stuff.</p><span class="signature-wrap"><img class="signature" src="assets/hand/signature.svg" alt="Signed, Hans Engebretsen" width="84" height="72"></span><nav class="sr-only" aria-label="Projects"><ul><li><a href="#moods">Moods</a>: Sonos speakers based on your mood.</li><li><a href="#notfound">Wrong page, or right one?</a>: A 404 with a game in it.</li><li><a href="#canvas">canvas</a>: Infinite single view for pasting live websites and any HTML.</li><li><a href="#quadrant">quadrant</a>: No-database, shareable matrix visualizations and timeline visualizations.</li><li><a href="#batchicons">batchicons</a>: One-click bulk SVG icon search and download.</li><li><a href="#loupe">loupe</a>: Show just what matters in a mockup in a single click.</li><li><a href="#peeps">peeps</a>: Quick generate, copy and paste UX personas.</li><li><a href="#md">md</a>: A dead simple markdown editor.</li><li><a href="#bingo">bingo</a>: Themed simple game for kids learning to read.</li><li><a href="#score">score</a>: Mobile scorekeeper for game nights.</li><li><a href="#folio">folio</a>: One-page investment forecast based on average past performance.</li><li><a href="#firecalc">firecalc</a>: Can you retire tomorrow? Play with the numbers.</li><li><a href="#made">made</a>: How much did you make today? How much did your employer pay you? Harder to answer than you'd think.</li><li><a href="#calc">calc</a>: Understand cap gains for a single stock sale.</li><li><a href="#krakentix">krakentix</a>: Five-season analysis of season ticket spend and sales.</li><li><a href="#scoreboard">scoreboard</a>: Scores and standings, and next game view for just the teams you care about.</li><li><a href="#odds">odds</a>: What are the odds? Clearer view on playoff odds for NHL teams.</li><li><a href="#hanstaxi">hanstaxi</a>: When's the next taxi? When should Hans leave and block his calendar to bike to the water taxi in time?</li><li><a href="#fishreports">fishreports</a>: Salmon counts in the Puget Sound by month, based on publicly reported numbers.</li><li><a href="#japanclan">japanclan</a>: Clan-organized travel details and only-in-Japan activities for a private e-ink display for the home.</li><li><a href="#trmnl">cntrl</a>: Manage and use AI to create screens with integrations to public APIs for a simple battery powered home E-ink display.</li></ul></nav></header></div></div></div></div>
