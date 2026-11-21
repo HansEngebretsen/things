@@ -58,7 +58,8 @@ function layout() {
     const px = (k + r + 400) % 2 === 0;   // every other seat is one of the app's standing pixel people (Hans, 13 Nov)
     // its own drift (Hans, 21 Nov: not a wave, each floating on its own): periods and phases from the seat, so they never line up
     const q = (n) => { const v = Math.sin((k * 12.9898 + r * 78.233 + n * 37.719) * 43758.5453); return v - Math.floor(v); };
-    const fl = { px: 5.5 + q(1) * 4, py: 4.2 + q(2) * 3.6, ax: q(3) * 6.28, ay: q(4) * 6.28, mx: .6 + q(5) * .8, my: .6 + q(6) * .8 };
+    // two unrelated slow sines per axis, so the path never repeats or lines up with a neighbour's
+    const fl = [1, 2, 3, 4].map(n => ({ p: 4 + q(n) * 7, a: q(n + 4) * 6.28, m: .5 + q(n + 8) }));
     cards.push(px ? { x, y, px: true, file: 'px/' + PX[id % PX.length], bg: BG[(k + r * 2 + 400) % 4], fl }
                   : { x, y, file: 'av/' + POOL[id % POOL.length], bg: BG[(k + r * 2 + 400) % 4], fl });
   }
@@ -84,38 +85,52 @@ function bake(img, bg, px) {
 }
 // one slow, shared drift: each head bobs a couple of percent of its size on a long sine, the phase rolling across the
 // rows like a breeze, so the crowd moves together and smoothly instead of each head twitching on its own keyframes
-const drift = (t, f) => [S * .014 * f.mx * Math.sin(t * 2 * Math.PI / f.px + f.ax), S * .022 * f.my * Math.sin(t * 2 * Math.PI / f.py + f.ay)];
+// a very small, random float (Hans, 21 Nov: no wave, extremely subtle): under a percent of a head each way
+const sw = (t, o) => o.m * Math.sin(t * 2 * Math.PI / o.p + o.a);
+const drift = (t, f) => [S * .005 * (sw(t, f[0]) + sw(t, f[1])), S * .007 * (sw(t, f[2]) + sw(t, f[3]))];
 // the pointer (Hans, 20-21 Nov; desktop only): the site passes it in (window.peepsPoint, page px in this frame, or null when
 // it is off the header), since the band takes no pointer itself. It carries a field like an orb: peeps inside it are pushed
 // away, knock into their neighbours, who knock into theirs, and everyone springs back to their seat. It wakes only once the
 // pointer has been off the header (the click that opened the page leaves it over the peeps: no jump into a pushed crowd).
-let ptr = null, armed = false, lastT = 0;
-window.peepsPoint = (x, y) => { if (x == null) { armed = true; ptr = null; } else if (armed) ptr = [x, y]; };
+let ptr = null, armed = false, lastT = 0, pv = [0, 0], prev = null;
+window.peepsPoint = (x, y) => { if (x == null) { armed = true; ptr = null; prev = null; } else if (armed) ptr = [x, y]; };
 function physics(dt) {
   if (!dt) return;
-  const R = S * 2.2, M = S * .92;   // the field's reach; how close two peeps get before they knock
+  // the pointer's own speed, smoothed: a quick swipe throws peeps, a slow one just parts them
+  if (ptr && prev) { const k = Math.min(1, dt * 14); pv = [pv[0] + ((ptr[0] - prev[0]) / dt - pv[0]) * k, pv[1] + ((ptr[1] - prev[1]) / dt - pv[1]) * k]; } else pv = [0, 0];
+  prev = ptr && [...ptr];
+  const R = S * 1.5, M = S * 1.04;   // the orb's reach; how close two peeps get before they knock
   for (const c of cards) {
-    c.ox ??= 0; c.oy ??= 0; c.vx ??= 0; c.vy ??= 0;
-    let fx = -c.ox * 34 - c.vx * 5.5, fy = -c.oy * 34 - c.vy * 5.5;   // a soft spring home, damped
+    c.ox ??= 0; c.oy ??= 0; c.vx ??= 0; c.vy ??= 0; c.rot ??= 0; c.vr ??= 0;
+    let fx = -c.ox * 22 - c.vx * 3, fy = -c.oy * 22 - c.vy * 3;   // a loose, bouncy spring home
     if (ptr) { const dx = c.x + c.ox - ptr[0], dy = c.y + c.oy - ptr[1], d = Math.hypot(dx, dy) || 1;
-      if (d < R) { const k = (1 - d / R) ** 2 * S * 85; fx += dx / d * k; fy += dy / d * k; } }
+      if (d < R) { const f = 1 - d / R, k = f * f * S * 90; fx += dx / d * k; fy += dy / d * k;
+        fx += pv[0] * f * 7; fy += pv[1] * f * 7; } }                  // and carried along by the swipe
     c.vx += fx * dt; c.vy += fy * dt;
+    c.vr += (-c.rot * 60 - c.vr * 7 + c.vx * .004) * dt;            // a little tilt as it's knocked sideways
   }
-  for (const c of cards) { c.ox += c.vx * dt; c.oy += c.vy * dt; }
-  for (let it = 0; it < 2; it++) for (const a of cards) for (const b of a.nb) {   // knocks: pushed apart, and they bounce
+  for (const c of cards) { c.ox += c.vx * dt; c.oy += c.vy * dt; c.rot += c.vr * dt; }
+  for (let it = 0; it < 3; it++) for (const a of cards) for (const b of a.nb) {   // knocks: pushed apart, and they bounce off each other
     const dx = (b.x + b.ox) - (a.x + a.ox), dy = (b.y + b.oy) - (a.y + a.oy), d = Math.hypot(dx, dy) || 1;
     if (d >= M) continue;
     const nx = dx / d, ny = dy / d, o = (M - d) / 2;
     a.ox -= nx * o; a.oy -= ny * o; b.ox += nx * o; b.oy += ny * o;
     const rv = (b.vx - a.vx) * nx + (b.vy - a.vy) * ny;
-    if (rv < 0) { const j = -rv * .8; a.vx -= nx * j; a.vy -= ny * j; b.vx += nx * j; b.vy += ny * j; }
+    if (rv < 0) { const j = -rv * .95; a.vx -= nx * j; a.vy -= ny * j; b.vx += nx * j; b.vy += ny * j; a.vr -= j * .002; b.vr += j * .002; }
+  }
+  for (const c of cards) {   // never past the window's edges (no peep cut off)
+    const lo = S / 2 + 6 - c.x, hi = w - S / 2 - 6 - c.x;
+    if (c.ox < lo) { c.ox = lo; c.vx = Math.abs(c.vx) * .6; } else if (c.ox > hi) { c.ox = hi; c.vx = -Math.abs(c.vx) * .6; }
+    const top = S * .62 + 2 - c.y, bot = h - S / 2 - 2 - c.y;   // nor past its top or foot
+    if (c.oy < top) { c.oy = top; c.vy = Math.abs(c.vy) * .6; } else if (c.oy > bot) { c.oy = bot; c.vy = -Math.abs(c.vy) * .6; }
+    c.rot = Math.max(-.22, Math.min(.22, c.rot));
   }
 }
-// a blink or two every five seconds or so: one of the faces shows its closed-eye bitmap for a moment
-let nextBlink = 3000;
+// a blink or two every couple of seconds: one of the faces shows its closed-eye bitmap for a moment
+let nextBlink = 1200;
 function blinks(now) {
   if (now > nextBlink) { const faces = cards.filter(c => c.shut); for (let n = 1 + (Math.random() < .4); n--;) { const c = faces[Math.floor(Math.random() * faces.length)]; if (c) { c.blinkAt = now; c.twice = Math.random() < .25; } }
-    nextBlink = now + 4200 + Math.random() * 1800; }
+    nextBlink = now + 1600 + Math.random() * 1600; }
 }
 const shut = (c, now) => { if (c.blinkAt == null) return false; const e = now - c.blinkAt; return e < 130 || (c.twice && e > 260 && e < 380); };
 let t0 = null;
@@ -131,8 +146,11 @@ function draw(now) {
     dx += c.ox || 0; dy += c.oy || 0;
     const bit = !still && c.shut && shut(c, now) ? c.shut : c.bit;
     // its feet (4 sprite pixels above the box's foot) on the seat's floor; it glides with the faces, not a device pixel at a time
+    const r = c.rot || 0;
+    if (r) { const ax = (c.x + dx) * dpr, ay = (c.y + S / 2 + dy) * dpr; ctx.save(); ctx.translate(ax, ay); ctx.rotate(r); ctx.translate(-ax, -ay); }   // about its feet
     if (c.bit.px) { const [pw, ph, foot] = c.bit.px; ctx.drawImage(c.bit, (c.x - pw / 2 + dx) * dpr, (c.y + S / 2 - ph + foot + dy) * dpr, pw * dpr, ph * dpr); }
     else ctx.drawImage(bit, (c.x - S / 2 + dx) * dpr, (c.y - S / 2 - PAD + dy) * dpr);
+    if (r) ctx.restore();
   }
 }
 const imgs = {};
