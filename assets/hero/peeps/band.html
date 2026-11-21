@@ -2,7 +2,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>peeps band</title>
-<!-- The peeps header band, live: the app's own people in three rows across the window, none cut by the edge, and no two
+<!-- The peeps header band, live: the app's own people in three rows across the window, edge to edge (the edges cut whoever they cut: Hans, 21 Nov), and no two
      the same (Hans, 13 Nov: they were twelve faces repeated). Every other seat is one of the app's modern avatars
      (css/styles.css in the peeps repo, without its name tag: the oval tombstone mask with hair popping out; av/), the
      seats between them its standing pixel people (js/pixel-art.js, whole, with their ground shadow; px/). The app's own
@@ -47,10 +47,8 @@ function layout() {
   const reach = Math.ceil(w / 2 / DX) + 1; cards = [];
   for (let r = 0; r < 3; r++) for (let k = -reach; k < reach; k++) {
     const x = w / 2 + (k + (r % 2 ? 0 : .5)) * DX, y = TOP + r * DY;
-    if (!card && (x - S / 2 < 8 || x + S / 2 > w - 8)) continue;   // whole peeps only: none cut by the window's edge
-    // nor under the site's back arrow (its circle plus 8 px, the top-left 68 px): the band starts at the window's top left
-    // (seats.json carries these rules to the site, which paints the same seats out of the still it shows first)
-    if (!still && x - S / 2 < 68 && y - S * .57 < 68) continue;
+    if (x + S / 2 < 0 || x - S / 2 > w) continue;   // full bleed (Hans, 21 Nov): the edges cut whoever they cut; only seats wholly off the page are left out
+    // the seat under the back arrow is filled too: the arrow sits on its own circle (Hans, 21 Nov)
     // each seat's person depends on the seat alone, never on the window's width, so the still (captured wide) and the
     // live page (at the window's width) put the same person in the same seat
     // every seat its own person: seats are numbered outward from the middle, so the app's own twelve sit in the middle
@@ -118,9 +116,7 @@ function physics(dt) {
     const rv = (b.vx - a.vx) * nx + (b.vy - a.vy) * ny;
     if (rv < 0) { const j = -rv * .95; a.vx -= nx * j; a.vy -= ny * j; b.vx += nx * j; b.vy += ny * j; a.vr -= j * .002; b.vr += j * .002; }
   }
-  for (const c of cards) {   // never past the window's edges (no peep cut off)
-    const lo = S / 2 + 6 - c.x, hi = w - S / 2 - 6 - c.x;
-    if (c.ox < lo) { c.ox = lo; c.vx = Math.abs(c.vx) * .6; } else if (c.ox > hi) { c.ox = hi; c.vx = -Math.abs(c.vx) * .6; }
+  for (const c of cards) {
     const top = S * .62 + 2 - c.y, bot = h - S / 2 - 2 - c.y;   // nor past its top or foot
     if (c.oy < top) { c.oy = top; c.vy = Math.abs(c.vy) * .6; } else if (c.oy > bot) { c.oy = bot; c.vy = -Math.abs(c.vy) * .6; }
     c.rot = Math.max(-.22, Math.min(.22, c.rot));
