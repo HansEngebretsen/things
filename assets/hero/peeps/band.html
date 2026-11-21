@@ -6,9 +6,9 @@
      the same (Hans, 13 Nov: they were twelve faces repeated). Every other seat is one of the app's modern avatars
      (css/styles.css in the peeps repo, without its name tag: the oval tombstone mask with hair popping out; av/), the
      seats between them its standing pixel people (js/pixel-art.js, whole, with their ground shadow; px/). The app's own
-     twelve sit nearest the middle and its other business faces fill outward. They drift together on one slow sine (a
-     couple of percent of a head, its phase rolling across the rows), drawn at fractional positions on one canvas, so
-     the motion glides. Every card is baked once into its own bitmap, and everything is rebuilt when the page is resized,
+     twelve sit nearest the middle and its other business faces fill outward. Each drifts on its own slow float (a couple
+     of percent of a head; Hans, 21 Nov: not a wave), a face blinks now and then, and the pointer pushes them about like an
+     orb (they knock into each other), drawn at fractional positions on one canvas, so the motion glides. Every card is baked once into its own bitmap, and everything is rebuilt when the page is resized,
      so it is never stretched. Sizes are in units of the page's height, which the site keeps at the band's (an expanded
      band is shown whole, at the one band height), so the middle 4:3 always matches the still
      (assets/hero/peeps/stage.webp, captured from this page with ?still by scripts/heroes.mjs). -->
@@ -56,9 +56,14 @@ function layout() {
     // every seat its own person: seats are numbered outward from the middle, so the app's own twelve sit in the middle
     const j = k >= 0 ? 2 * k : -2 * k - 1, id = j * 3 + r;
     const px = (k + r + 400) % 2 === 0;   // every other seat is one of the app's standing pixel people (Hans, 13 Nov)
-    cards.push(px ? { x, y, px: true, file: 'px/' + PX[id % PX.length], bg: BG[(k + r * 2 + 400) % 4], ph: k * .55 + r * 1.3 }
-                  : { x, y, file: 'av/' + POOL[id % POOL.length], bg: BG[(k + r * 2 + 400) % 4], ph: k * .55 + r * 1.3 });
+    // its own drift (Hans, 21 Nov: not a wave, each floating on its own): periods and phases from the seat, so they never line up
+    const q = (n) => { const v = Math.sin((k * 12.9898 + r * 78.233 + n * 37.719) * 43758.5453); return v - Math.floor(v); };
+    const fl = { px: 5.5 + q(1) * 4, py: 4.2 + q(2) * 3.6, ax: q(3) * 6.28, ay: q(4) * 6.28, mx: .6 + q(5) * .8, my: .6 + q(6) * .8 };
+    cards.push(px ? { x, y, px: true, file: 'px/' + PX[id % PX.length], bg: BG[(k + r * 2 + 400) % 4], fl }
+                  : { x, y, file: 'av/' + POOL[id % POOL.length], bg: BG[(k + r * 2 + 400) % 4], fl });
   }
+  // who can knock into whom: neighbours within two seats
+  cards.forEach((c, i) => { c.nb = []; for (let j = i + 1; j < cards.length; j++) if (Math.hypot(cards[j].x - c.x, cards[j].y - c.y) < DX * 2.1) c.nb.push(cards[j]); });
 }
 // one card, as the app draws it: the oval behind, then the avatar at full width, bottom-aligned, shown inside the oval
 // and everything above the oval's equator (so hair pops out of the shape)
@@ -79,46 +84,71 @@ function bake(img, bg, px) {
 }
 // one slow, shared drift: each head bobs a couple of percent of its size on a long sine, the phase rolling across the
 // rows like a breeze, so the crowd moves together and smoothly instead of each head twitching on its own keyframes
-const drift = (t, ph) => [S * .012 * Math.sin(t * 2 * Math.PI / 7 + ph * .7), S * .022 * Math.sin(t * 2 * Math.PI / 5.5 + ph)];
-// the pointer (Hans, 20 Nov: hover the peeps and they move a little, ping around; desktop only): the site passes it in
-// (window.peepsPoint, page px in this frame, or null when it leaves), since the band itself takes no pointer. Peeps near
-// it lean away on a spring; one it passes over hops and swells a little, then everyone settles back.
-let ptr = null, lastT = 0;
-window.peepsPoint = (x, y) => { ptr = x == null ? null : [x, y]; };
+const drift = (t, f) => [S * .014 * f.mx * Math.sin(t * 2 * Math.PI / f.px + f.ax), S * .022 * f.my * Math.sin(t * 2 * Math.PI / f.py + f.ay)];
+// the pointer (Hans, 20-21 Nov; desktop only): the site passes it in (window.peepsPoint, page px in this frame, or null when
+// it is off the header), since the band takes no pointer itself. It carries a field like an orb: peeps inside it are pushed
+// away, knock into their neighbours, who knock into theirs, and everyone springs back to their seat. It wakes only once the
+// pointer has been off the header (the click that opened the page leaves it over the peeps: no jump into a pushed crowd).
+let ptr = null, armed = false, lastT = 0;
+window.peepsPoint = (x, y) => { if (x == null) { armed = true; ptr = null; } else if (armed) ptr = [x, y]; };
 function physics(dt) {
-  const R = S * 1.35;
+  if (!dt) return;
+  const R = S * 2.2, M = S * .92;   // the field's reach; how close two peeps get before they knock
   for (const c of cards) {
-    c.ox ??= 0; c.oy ??= 0; c.vx ??= 0; c.vy ??= 0; c.sc ??= 1; c.vs ??= 0;
-    let fx = -c.ox * 90, fy = -c.oy * 90;                                  // spring home
-    if (ptr) { const dx = c.x - ptr[0], dy = c.y - ptr[1], d = Math.hypot(dx, dy) || 1;
-      if (d < R) { const k = (1 - d / R) ** 2 * S * 26; fx += dx / d * k; fy += dy / d * k; }
-      const over = d < S * .5; if (over && !c.over) { c.vy -= S * 3.2; c.vs += 2.2; } c.over = over; } else c.over = false;
-    c.vx += (fx - c.vx * 11) * dt; c.vy += (fy - c.vy * 11) * dt; c.ox += c.vx * dt; c.oy += c.vy * dt;
-    c.vs += (-(c.sc - 1) * 160 - c.vs * 12) * dt; c.sc += c.vs * dt;
+    c.ox ??= 0; c.oy ??= 0; c.vx ??= 0; c.vy ??= 0;
+    let fx = -c.ox * 34 - c.vx * 5.5, fy = -c.oy * 34 - c.vy * 5.5;   // a soft spring home, damped
+    if (ptr) { const dx = c.x + c.ox - ptr[0], dy = c.y + c.oy - ptr[1], d = Math.hypot(dx, dy) || 1;
+      if (d < R) { const k = (1 - d / R) ** 2 * S * 85; fx += dx / d * k; fy += dy / d * k; } }
+    c.vx += fx * dt; c.vy += fy * dt;
+  }
+  for (const c of cards) { c.ox += c.vx * dt; c.oy += c.vy * dt; }
+  for (let it = 0; it < 2; it++) for (const a of cards) for (const b of a.nb) {   // knocks: pushed apart, and they bounce
+    const dx = (b.x + b.ox) - (a.x + a.ox), dy = (b.y + b.oy) - (a.y + a.oy), d = Math.hypot(dx, dy) || 1;
+    if (d >= M) continue;
+    const nx = dx / d, ny = dy / d, o = (M - d) / 2;
+    a.ox -= nx * o; a.oy -= ny * o; b.ox += nx * o; b.oy += ny * o;
+    const rv = (b.vx - a.vx) * nx + (b.vy - a.vy) * ny;
+    if (rv < 0) { const j = -rv * .8; a.vx -= nx * j; a.vy -= ny * j; b.vx += nx * j; b.vy += ny * j; }
   }
 }
+// a blink or two every five seconds or so: one of the faces shows its closed-eye bitmap for a moment
+let nextBlink = 3000;
+function blinks(now) {
+  if (now > nextBlink) { const faces = cards.filter(c => c.shut); for (let n = 1 + (Math.random() < .4); n--;) { const c = faces[Math.floor(Math.random() * faces.length)]; if (c) { c.blinkAt = now; c.twice = Math.random() < .25; } }
+    nextBlink = now + 4200 + Math.random() * 1800; }
+}
+const shut = (c, now) => { if (c.blinkAt == null) return false; const e = now - c.blinkAt; return e < 130 || (c.twice && e > 260 && e < 380); };
 let t0 = null;
 function draw(now) {
-  const dt = Math.min(.05, lastT ? (now - lastT) / 1000 : 0); lastT = now; if (!still) physics(dt);
+  const dt = Math.min(.033, lastT ? (now - lastT) / 1000 : 0); lastT = now; if (!still) { physics(dt); blinks(now); }
   // the drift eases in from rest over its first two seconds, so the first frame is exactly the still the site shows
   // underneath (assets/hero/peeps/band.webp) and the live page fades in over it without a jump
   if (t0 == null) t0 = now;
   const on = Math.min(1, (now - t0) / 2000), amp = on * on * (3 - 2 * on);
   ctx.clearRect(0, 0, cv.width, cv.height);
   for (const c of cards) {   // at fractional positions, so the motion glides rather than steps a pixel at a time
-    let [dx, dy] = still ? [0, 0] : drift((now - t0) / 1000, c.ph).map(v => v * amp);
-    dx += c.ox || 0; dy += c.oy || 0; const sc = c.sc || 1;
-    if (sc !== 1) { const ax = c.x + dx, ay = c.y + S / 2 + dy; ctx.save(); ctx.translate(ax * dpr, ay * dpr); ctx.scale(sc, sc); ctx.translate(-ax * dpr, -ay * dpr); }
+    let [dx, dy] = still ? [0, 0] : drift((now - t0) / 1000, c.fl).map(v => v * amp);
+    dx += c.ox || 0; dy += c.oy || 0;
+    const bit = !still && c.shut && shut(c, now) ? c.shut : c.bit;
     // its feet (4 sprite pixels above the box's foot) on the seat's floor; it glides with the faces, not a device pixel at a time
     if (c.bit.px) { const [pw, ph, foot] = c.bit.px; ctx.drawImage(c.bit, (c.x - pw / 2 + dx) * dpr, (c.y + S / 2 - ph + foot + dy) * dpr, pw * dpr, ph * dpr); }
-    else ctx.drawImage(c.bit, (c.x - S / 2 + dx) * dpr, (c.y - S / 2 - PAD + dy) * dpr);
-    if (sc !== 1) ctx.restore();
+    else ctx.drawImage(bit, (c.x - S / 2 + dx) * dpr, (c.y - S / 2 - PAD + dy) * dpr);
   }
 }
 const imgs = {};
 const load = f => imgs[f] || (imgs[f] = new Promise(ok => { const im = new Image(); im.onload = () => ok(im); im.onerror = () => ok(null); im.src = `${f}.svg`; }));
 // built for the page's size, and rebuilt when it changes, so the band is never stretched
-const build = () => { layout(); return Promise.all(cards.map(c => load(c.file).then(im => { c.bit = im ? bake(im, c.bg, c.px) : document.createElement('canvas'); }))); };
+// a face with its eyes closed: the avatar's own Eyes group, its contents swapped for two closed lids
+const shuts = {};
+const loadShut = f => shuts[f] || (shuts[f] = fetch(`${f}.svg`).then(r => r.text()).then(t => {
+  const d = new DOMParser().parseFromString(t, 'image/svg+xml'), g = d.querySelector('g[id^="Eyes"]'); if (!g) return null;
+  if (d.querySelector('[id*="Sunglasses"], [id*="Wayfarers"], [id*="Kurt"]')) return null;   // dark glasses: a blink wouldn't show
+  g.innerHTML = '<path d="M22 23 Q30 29 38 23 M74 23 Q82 29 90 23" fill="none" stroke="#000" stroke-width="4" stroke-linecap="round"/>';
+  const url = URL.createObjectURL(new Blob([new XMLSerializer().serializeToString(d)], { type: 'image/svg+xml' }));
+  return new Promise(ok => { const im = new Image(); im.onload = () => ok(im); im.onerror = () => ok(null); im.src = url; });
+}).catch(() => null));
+const build = () => { layout(); return Promise.all(cards.map(c => load(c.file).then(im => { c.bit = im ? bake(im, c.bg, c.px) : document.createElement('canvas'); })))
+  .then(() => { if (!still) cards.filter(c => !c.px).forEach(c => loadShut(c.file).then(im => { if (im) c.shut = bake(im, c.bg, false); })); }); };
 let ready = build(), raf = 0;
 addEventListener('resize', () => { ready = build().then(() => still && draw(0)); });
 ready.then(() => {
