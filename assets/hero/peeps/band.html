@@ -138,6 +138,7 @@ function draw(now) {
   const on = Math.min(1, (now - t0) / 2000), amp = on * on * (3 - 2 * on);
   ctx.clearRect(0, 0, cv.width, cv.height);
   for (const c of cards) {   // at fractional positions, so the motion glides rather than steps a pixel at a time
+    if (!c.bit) continue;   // rebuilt on a resize (a phone's App / Demo switch): drawn once its picture is in, so the loop never stops
     let [dx, dy] = still ? [0, 0] : drift((now - t0) / 1000, c.fl).map(v => v * amp);
     dx += c.ox || 0; dy += c.oy || 0;
     const bit = !still && c.shut && shut(c, now) ? c.shut : c.bit;
